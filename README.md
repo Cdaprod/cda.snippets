@@ -60,4 +60,4 @@ MIT
 
 ---
 
-Feel free to modify or expand upon this template to better suit the specifics of your application or personal style!
+Feel free to fork and modify or expand upon this template to better suit the specifics of your application or personal style!
