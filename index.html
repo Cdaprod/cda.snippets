@@ -3,37 +3,59 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Snippet App</title>
+    <!-- CDN for a better font (using Google Fonts' Roboto) -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
-        body {
+        * {
+          box-sizing: border-box; /* Ensures padding and border are included in total width */
+        }
+        
+        html, body {
+            bg-size: cover;
+            overflow-x: hidden;
+            margin: 0; /* Removes any default margin */
+            padding: 0; /* Removes any default padding */
+            width: 100vw;
             font-family: 'Arial', sans-serif;
             background: linear-gradient(to right, #000428, #004e92);
         }
 
         .snippet {
-            background-color: rgba(255, 255, 255, 0.1);
+            background: linear-gradient(to right, #004e92, #000428) !important;
+            background-color: rgba(255, 255, 255, 0.5);
             border-radius: 5px;
             padding: 10px;
             margin-bottom: 10px;
             position: relative;
         }
+        #tagNav {
+        }
+
+        .tag-btn {
+            background-color: #fff; /* Ensuring the tagNav maintains the white background */
+            border: 1px solid #002855; /* Lighter than the background but darker than the text */
+            color: #002855; /* Font color of the tag buttons */
+        }
+
+        .tag-btn.selected {
+            background-color: #b5e48c; /* A lime shade when the tag is selected */
+            color: #002855; /* Font color when the tag is selected */
+        }
     </style>
 </head>
 
 <body class="text-white p-6">
-
     <!-- Search Input -->
     <input type="text" id="searchInput" placeholder="Search..." class="mb-4 p-2 rounded bg-white text-black w-full">
-
+    <button id="newSnippetButton" class="p-2 rounded bg-lime-500">New Snippet</button>
     <button id="importButton" class="p-2 rounded bg-lime-500 mr-2">Import</button>
     <input type="file" id="importFile" accept=".json" style="display:none">
     <button id="exportButton" class="p-2 rounded bg-lime-500">Export</button>
-    <button id="newSnippetButton" class="p-2 rounded bg-lime-500">New Snippet</button>
+    <div id="tagNav" class="bg-blue mb-4 overflow-x-auto whitespace-nowrap py-1"></div>
 
-    <!-- Tags Navbar -->
-    <div id="tagNav" class="mb-4 overflow-x-auto whitespace-nowrap"></div>
 
     <!-- Snippets Container -->
     <div id="snippets"></div>
@@ -52,35 +74,35 @@
             }
         }
 
-        
-
         let snippets = {};
         loadFromLocalStorage();
-        
-        // Get reference to the new button
-        const newSnippetButton = document.getElementById('newSnippetButton');
 
-        newSnippetButton.addEventListener('click', () => {
-            // Logic to handle new snippet creation
+        let currentFilterTag = null; // To keep track of the currently selected filter tag
 
-            // Example: Prompt the user to enter snippet details
-            const description = prompt("Enter snippet description (e.g. #Tag):");
-            const body = prompt("Enter snippet body:");
-
-            // Validate if both description and body are provided
-            if (description && body) {
-                const newSnippetId = new Date().getTime().toString(); // Generating a unique ID using the current timestamp
-                snippets[newSnippetId] = {
-                    description: description,
-                    body: body
-                };
-
-                // Refresh the displayed snippets and tags
-                populateTags();
+        function filterSnippets(tag) {
+            if (currentFilterTag === tag) {
+                // If the clicked tag is already the current filter, clear the filter
+                currentFilterTag = null;
                 displaySnippets(Object.values(snippets));
+            } else {
+                currentFilterTag = tag;
+                const filteredSnippets = Object.values(snippets).filter(snippet => snippet.description.startsWith(tag));
+                displaySnippets(filteredSnippets);
             }
-        });
+            // Update tag button styles
+            updateTagStyles();
+        }
 
+        function updateTagStyles() {
+            const buttons = document.querySelectorAll("#tagNav button");
+            buttons.forEach(button => {
+                if (button.textContent === currentFilterTag) {
+                    button.classList.add('selected'); // Selected style
+                } else {
+                    button.classList.remove('selected'); // Default style
+                }
+            });
+        }
 
         function populateTags() {
             const tagContainer = document.getElementById('tagNav');
@@ -88,10 +110,10 @@
 
             const uniqueTags = [...new Set(Object.values(snippets).map(snippet => snippet.description.split(" ")[0]))];
 
-            uniqueTags.forEach(tag => {
+        uniqueTags.forEach(tag => {
                 const button = document.createElement('button');
                 button.textContent = tag;
-                button.classList.add('p-2', 'mr-2', 'rounded', 'bg-lime-300', 'text-blue-900');
+                button.classList.add('p-2', 'mr-2', 'rounded', 'tag-btn'); // Applying our new styles
                 button.onclick = function() {
                     filterSnippets(tag);
                 };
@@ -99,12 +121,6 @@
             });
         }
 
-        function filterSnippets(tag) {
-            const filteredSnippets = Object.values(snippets).filter(snippet => snippet.description.startsWith(tag));
-            displaySnippets(filteredSnippets);
-        }
-        
-        
         function displaySnippets(data) {
             const snippetContainer = document.getElementById('snippets');
             snippetContainer.innerHTML = '';
@@ -154,6 +170,24 @@
             });
         }
 
+        // Get reference to the new button
+        const newSnippetButton = document.getElementById('newSnippetButton');
+
+        newSnippetButton.addEventListener('click', () => {
+            const description = prompt("Enter snippet description (e.g. #Tag):");
+            const body = prompt("Enter snippet body:");
+
+            if (description && body) {
+                const newSnippetId = new Date().getTime().toString();
+                snippets[newSnippetId] = {
+                    description: description,
+                    body: body
+                };
+                saveToLocalStorage();
+                populateTags();
+                displaySnippets(Object.values(snippets));
+            }
+        });
 
         populateTags();
         displaySnippets(Object.values(snippets));
@@ -177,7 +211,7 @@
                     try {
                         const importedData = JSON.parse(e.target.result);
                         snippets = { ...snippets, ...importedData };
-                        saveToLocalStorage();  // <-- Save to localStorage after importing
+                        saveToLocalStorage();
                         populateTags();
                         displaySnippets(Object.values(snippets));
                         alert('Data Imported Successfully!');
@@ -185,7 +219,6 @@
                         alert('Invalid JSON file.');
                     }
                 };
-
                 reader.readAsText(file);
             }
         });
@@ -202,8 +235,5 @@
             document.body.removeChild(link);
         });
     </script>
-
-
 </body>
-
 </html>
