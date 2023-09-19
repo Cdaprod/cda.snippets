@@ -1,3 +1,5 @@
+[![Jekyll site CI](https://github.com/Cdaprod/cda.snippets/actions/workflows/jekyll-docker.yml/badge.svg)](https://github.com/Cdaprod/cda.snippets/actions/workflows/jekyll-docker.yml)
+
 A vanillajs web app for locally managing my snippets which i use directly from my Files app on IOS. 
 
 Easy Import from apps like [ShellFish IOS application](https://apps.apple.com/app/id1336634154).
