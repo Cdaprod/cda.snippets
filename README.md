@@ -1,4 +1,5 @@
-[![Jekyll site CI](https://github.com/Cdaprod/cda.snippets/actions/workflows/jekyll-docker.yml/badge.svg)](https://github.com/Cdaprod/cda.snippets/actions/workflows/jekyll-docker.yml)
+[![Jekyll site CI](https://github.com/Cdaprod/cda.snippets/actions/workflows/jekyll-docker.yml/badge.svg)](https://github.com/Cdaprod/cda.snippets/actions/workflows/jekyll-docker.yml) 
+[![Deploy static content to Pages](https://github.com/Cdaprod/cda.snippets/actions/workflows/static.yml/badge.svg)](https://github.com/Cdaprod/cda.snippets/actions/workflows/static.yml)
 
 [Demo Site Page](https://ghpages.cdaprod.dev/cda.snippets/)
 
