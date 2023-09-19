@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snippet App</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to right, #000428, #004e92);
+        }
+
+        .snippet {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+            position: relative;
+        }
+    </style>
+</head>
+
+<body class="text-white p-6">
+
+    <!-- Search Input -->
+    <input type="text" id="searchInput" placeholder="Search..." class="mb-4 p-2 rounded bg-white text-black w-full">
+
+    <button id="importButton" class="p-2 rounded bg-lime-500 mr-2">Import</button>
+    <input type="file" id="importFile" accept=".json" style="display:none">
+    <button id="exportButton" class="p-2 rounded bg-lime-500">Export</button>
+    <button id="newSnippetButton" class="p-2 rounded bg-lime-500">New Snippet</button>
+
+    <!-- Tags Navbar -->
+    <div id="tagNav" class="mb-4 overflow-x-auto whitespace-nowrap"></div>
+
+    <!-- Snippets Container -->
+    <div id="snippets"></div>
+
+    <!-- App's JavaScript -->
+    <script>
+        const saveToLocalStorage = () => {
+            const data = JSON.stringify(snippets);
+            localStorage.setItem('snippetsData', data);
+        }
+
+        const loadFromLocalStorage = () => {
+            const cachedData = localStorage.getItem('snippetsData');
+            if (cachedData) {
+                snippets = JSON.parse(cachedData);
+            }
+        }
+
+        
+
+        let snippets = {};
+        loadFromLocalStorage();
+        
+        // Get reference to the new button
+        const newSnippetButton = document.getElementById('newSnippetButton');
+
+        newSnippetButton.addEventListener('click', () => {
+            // Logic to handle new snippet creation
+
+            // Example: Prompt the user to enter snippet details
+            const description = prompt("Enter snippet description (e.g. #Tag):");
+            const body = prompt("Enter snippet body:");
+
+            // Validate if both description and body are provided
+            if (description && body) {
+                const newSnippetId = new Date().getTime().toString(); // Generating a unique ID using the current timestamp
+                snippets[newSnippetId] = {
+                    description: description,
+                    body: body
+                };
+
+                // Refresh the displayed snippets and tags
+                populateTags();
+                displaySnippets(Object.values(snippets));
+            }
+        });
+
+
+        function populateTags() {
+            const tagContainer = document.getElementById('tagNav');
+            tagContainer.innerHTML = '';
+
+            const uniqueTags = [...new Set(Object.values(snippets).map(snippet => snippet.description.split(" ")[0]))];
+
+            uniqueTags.forEach(tag => {
+                const button = document.createElement('button');
+                button.textContent = tag;
+                button.classList.add('p-2', 'mr-2', 'rounded', 'bg-lime-300', 'text-blue-900');
+                button.onclick = function() {
+                    filterSnippets(tag);
+                };
+                tagContainer.appendChild(button);
+            });
+        }
+
+        function filterSnippets(tag) {
+            const filteredSnippets = Object.values(snippets).filter(snippet => snippet.description.startsWith(tag));
+            displaySnippets(filteredSnippets);
+        }
+        
+        
+        function displaySnippets(data) {
+            const snippetContainer = document.getElementById('snippets');
+            snippetContainer.innerHTML = '';
+
+            data.forEach(snippet => {
+                const snippetDiv = document.createElement('div');
+                snippetDiv.classList.add('mb-4', 'p-4', 'border', 'border-lime-300', 'rounded');
+
+                const title = document.createElement('h2');
+                title.textContent = snippet.description;
+                title.classList.add('text-lime-400', 'mb-2');
+                snippetDiv.appendChild(title);
+
+                // Check if body is an array or string
+                if (Array.isArray(snippet.body)) {
+                    snippet.body.forEach(line => {
+                        const content = document.createElement('p');
+                        content.textContent = line;
+                        content.classList.add('mb-2');
+                        snippetDiv.appendChild(content);
+                    });
+                } else {
+                    const content = document.createElement('p');
+                    content.textContent = snippet.body;
+                    content.classList.add('mb-2');
+                    snippetDiv.appendChild(content);
+                }
+
+                const copyButton = document.createElement('button');
+                copyButton.textContent = "Copy";
+                copyButton.classList.add('p-1', 'rounded', 'bg-lime-500');
+                copyButton.onclick = function() {
+                    // Adjust copy function for array
+                    if (Array.isArray(snippet.body)) {
+                        navigator.clipboard.writeText(snippet.body.join('\n'));
+                    } else {
+                        navigator.clipboard.writeText(snippet.body);
+                    }
+                };
+                snippetDiv.appendChild(copyButton);
+
+                const hr = document.createElement('hr');
+                hr.classList.add('border-lime-500', 'mt-4');
+                snippetDiv.appendChild(hr);
+
+                snippetContainer.appendChild(snippetDiv);
+            });
+        }
+
+
+        populateTags();
+        displaySnippets(Object.values(snippets));
+
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const searchTerm = e.target.value;
+            const filteredSnippets = Object.values(snippets).filter(snippet => snippet.description.includes(searchTerm) || snippet.body.includes(searchTerm));
+            displaySnippets(filteredSnippets);
+        });
+
+        const importButton = document.getElementById('importButton');
+        const importFile = document.getElementById('importFile');
+        const exportButton = document.getElementById('exportButton');
+
+        importButton.addEventListener('click', () => importFile.click());
+        importFile.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const importedData = JSON.parse(e.target.result);
+                        snippets = { ...snippets, ...importedData };
+                        saveToLocalStorage();  // <-- Save to localStorage after importing
+                        populateTags();
+                        displaySnippets(Object.values(snippets));
+                        alert('Data Imported Successfully!');
+                    } catch (error) {
+                        alert('Invalid JSON file.');
+                    }
+                };
+
+                reader.readAsText(file);
+            }
+        });
+
+        exportButton.addEventListener('click', () => {
+            const dataStr = JSON.stringify(snippets, null, 2);
+            const blob = new Blob([dataStr], { type: 'text/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('download', 'snippets.json');
+            link.href = url;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+    </script>
+
+
+</body>
+
+</html>
